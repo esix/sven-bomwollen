@@ -1,0 +1,24 @@
+# Dependencies and build output
+node_modules/
+dist/
+
+# Decompiled sources and reverse-engineering work (not part of the project)
+Sven_ida.c
+Sven_ida_functions.csv
+Sven_ida_progress.log
+Sven_ida_strings.txt
+Sven.reko/
+ida_work/
+decompile_all.py
+audit/
+CONTEXT.md
+
+# Original game files
+Sven.exe
+Sven.dat
+Sven - Der Film.mpg
+
+# Local tooling
+.claude/
+.DS_Store
+*.log

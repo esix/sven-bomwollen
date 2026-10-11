@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sven Bømwøllen — JS port</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #000; height: 100%; }
+  #stage { display: flex; align-items: center; justify-content: center; height: 100vh; }
+  /* 640×480 display (SetDisplayMode(640,480,16), sub_410541 IDA:7590). */
+  /* Fullscreen exclusive mode: the 640×480 image fills the monitor; scaled
+     aspect-correct to the viewport (mouse coords are rescaled in boot.js). */
+  canvas { background: #000; image-rendering: pixelated; display: block;
+           width: min(100vw, calc(100vh * 4 / 3)); height: auto; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="screen" width="640" height="480"></canvas>
+</div>
+
+<!-- Loaded in dependency order. Plain <script> globals (no ES modules). -->
+<script src="src/core.js"></script>
+<script src="src/audio.js"></script>
+<script src="src/map.js"></script>
+<script src="src/sven.js"></script>
+<script src="src/sheep.js"></script>
+<script src="src/npc_common.js"></script>
+<script src="src/dog.js"></script>
+<script src="src/shepherd.js"></script>
+<script src="src/lamb.js"></script>
+<script src="src/mermaid.js"></script>
+<script src="src/ufo.js"></script>
+<script src="src/items.js"></script>
+<script src="src/game.js"></script>
+<!-- Game.prototype mixins (must follow game.js) -->
+<script src="src/game_level.js"></script>
+<script src="src/game_interact.js"></script>
+<script src="src/game_sheep.js"></script>
+<script src="src/game_npc.js"></script>
+<script src="src/game_items.js"></script>
+<script src="src/game_screens.js"></script>
+<!-- Debug controls; inert unless the URL has ?debug -->
+<script src="src/debug.js"></script>
+<script src="src/boot.js"></script>
+</body>
+</html>
