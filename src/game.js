@@ -233,17 +233,21 @@ class Game {
     };
     this._drawLoadingBar(0, total);
     // Every [Images] line, in file order (sub_40DD58 / sub_40C99F per line).
-    for (const line of imgSec.lines) {
-      if (!isAlpha(line)) continue;
+    // The downloads all start now (web: one at a time costs a round trip per
+    // file); the lines are still taken, and the bar advanced, in file order.
+    const imgLines = imgSec.lines.filter(isAlpha).map(line => {
       const name = line.slice(0, line.indexOf('=')).trim();
-      const def = this.lib.Images[name];
       // Library.ini def: file,rows,cols,frames,key,flipable.
       // Field 6 = flipable (sub_40C99F byte +44; sub_407FA2 mirrors only if set).
+      const [file, rows, cols, frames, , flip] = this.lib.Images[name].split(',');
+      const sprite = loadSprite(file.trim());
+      sprite.catch(() => {});                 // surfaced in order by the await below
+      return { line, name, sprite, rows: +rows, cols: +cols, frames: +frames, flip: +flip.trim() };
+    });
+    for (const { line, name, sprite, rows, cols, frames, flip } of imgLines) {
       // A failed load throws 1005 and aborts the app (IDA:6772-6790): the
       // rejection propagates out of load().
-      const [file, rows, cols, frames, , flip] = def.split(',');
-      this.assets[name] = new SpriteSheet(
-        await loadSprite(file.trim()), +rows, +cols, +frames, +flip.trim());
+      this.assets[name] = new SpriteSheet(await sprite, rows, cols, frames, flip);
       if (!progress(line.length + 1)) return;
     }
 
