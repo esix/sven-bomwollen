@@ -10,6 +10,7 @@
     "test": "node tests/test_suite.js"
   },
   "devDependencies": {
+    "esbuild": "^0.28.2",
     "playwright": "^1.60.0"
   }
 }

@@ -27,50 +27,36 @@ function parseIni(text) {
   return out;
 }
 
-//=== Image loading + chromakey =============================================
-// Library.ini key field is read with sscanf("%8X") (sub_40DD58 IDA:6402) and
-// turned into a GDI COLORREF with the first two hex digits as RED
-// (IDA:6427): "619DBF" keys RGB(0x61,0x9D,0xBF) (CloudsShaded). A non-zero
-// high byte (e.g. "FF000000") means no colour key at all: SetColorKey only
-// when (key & 0xFF000000)==0 (sub_408621 IDA:3494), and sub_407FA2 blits
-// without SRCCOLORKEY otherwise (IDA:3251).
-// Colour-key match: the display/surfaces are 16 bpp (SetDisplayMode(640,480,16),
-// IDA:7590) and the key is the surface's own readback of SetPixel(key)
-// (sub_4021A0 IDA:689-724), so every pixel whose 16-bit value equals the key's
-// is transparent. Compared as RGB565 (r>>3, g>>2, b>>3).
-// 565 vs 555: the EXE probes the primary format (sub_410541 IDA:7630-7644,
-// dword_49AF64) and supports both; key and bitmap both go through GDI, so the
-// key always equals the converted pixels. Every keyed Library.ini sheet gives
-// identical transparent-pixel counts under 565 and 555, so 565 is
-// behaviour-equivalent for the shipped data. Displayed colours are NOT
-// quantised to 16 bpp here (R3-CMA-02: the 5/6-bit → 8-bit display expansion
-// is hardware-dependent).
-async function loadSprite(filename, chromaHex) {
+//=== Image loading (colour key baked into PNG alpha) ========================
+// Library.ini names the original BMPs; the sprites ship as PNGs of the same
+// base name with the colour key already applied as alpha (converted once with
+// this loader's former keying, pixel-identical in Chromium for all 147 sheets).
+// The keying rule that was baked in:
+// - Library.ini key field is read with sscanf("%8X") (sub_40DD58 IDA:6402) and
+//   turned into a GDI COLORREF with the first two hex digits as RED
+//   (IDA:6427): "619DBF" keys RGB(0x61,0x9D,0xBF) (CloudsShaded). A non-zero
+//   high byte (e.g. "FF000000") means no colour key at all: SetColorKey only
+//   when (key & 0xFF000000)==0 (sub_408621 IDA:3494), and sub_407FA2 blits
+//   without SRCCOLORKEY otherwise (IDA:3251).
+// - The display/surfaces are 16 bpp (SetDisplayMode(640,480,16), IDA:7590) and
+//   the key is the surface's own readback of SetPixel(key) (sub_4021A0
+//   IDA:689-724), so every pixel whose 16-bit value equals the key's is
+//   transparent: compared as RGB565 (r>>3, g>>2, b>>3).
+// - 565 vs 555: the EXE probes the primary format (sub_410541 IDA:7630-7644,
+//   dword_49AF64); every keyed sheet gives identical transparent-pixel counts
+//   under 565 and 555. Displayed colours are NOT quantised to 16 bpp
+//   (R3-CMA-02: the 5/6-bit → 8-bit display expansion is hardware-dependent).
+async function loadSprite(filename) {
   const img = new Image();
-  // File part URL-encoded (e.g. 'Ufo67%.bmp'), path separators kept.
-  img.src = ASSETS + String(filename).split('/').map(encodeURIComponent).join('/');
+  // File part URL-encoded (e.g. 'Ufo67%.png'), path separators kept.
+  const png = String(filename).replace(/\.bmp$/i, '.png');
+  img.src = ASSETS + png.split('/').map(encodeURIComponent).join('/');
   await img.decode();
 
   const c = document.createElement('canvas');
   c.width = img.naturalWidth;
   c.height = img.naturalHeight;
-  const cx = c.getContext('2d');
-  cx.drawImage(img, 0, 0);
-
-  if (chromaHex != null) {
-    const key = parseInt(String(chromaHex).trim(), 16) >>> 0;
-    if ((key & 0xFF000000) === 0) {
-      const r = ((key >> 16) & 0xFF) >> 3;
-      const g = ((key >>  8) & 0xFF) >> 2;
-      const b = ( key        & 0xFF) >> 3;
-      const data = cx.getImageData(0, 0, c.width, c.height);
-      const p = data.data;
-      for (let i = 0; i < p.length; i += 4) {
-        if ((p[i] >> 3) === r && (p[i+1] >> 2) === g && (p[i+2] >> 3) === b) p[i+3] = 0;
-      }
-      cx.putImageData(data, 0, 0);
-    }
-  }
+  c.getContext('2d').drawImage(img, 0, 0);
   return c;
 }
 

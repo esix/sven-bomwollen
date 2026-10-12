@@ -241,9 +241,9 @@ class Game {
       // Field 6 = flipable (sub_40C99F byte +44; sub_407FA2 mirrors only if set).
       // A failed load throws 1005 and aborts the app (IDA:6772-6790): the
       // rejection propagates out of load().
-      const [file, rows, cols, frames, chroma, flip] = def.split(',');
+      const [file, rows, cols, frames, , flip] = def.split(',');
       this.assets[name] = new SpriteSheet(
-        await loadSprite(file.trim(), chroma.trim()), +rows, +cols, +frames, +flip.trim());
+        await loadSprite(file.trim()), +rows, +cols, +frames, +flip.trim());
       if (!progress(line.length + 1)) return;
     }
 

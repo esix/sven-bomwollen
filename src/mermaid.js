@@ -11,9 +11,9 @@ function muSheet(game, name) {
   if (a) return a;
   const def = game.lib && game.lib.Images && game.lib.Images[name];
   if (!def || MU_PENDING[name] || typeof loadSprite !== 'function') return null;
-  const [file, rows, cols, frames, chroma, flip] = def.split(',');
+  const [file, rows, cols, frames, , flip] = def.split(',');
   // 6th field = flipable (sub_40C99F → byte +44; sub_407FA2 mirrors only if set).
-  MU_PENDING[name] = loadSprite(file.trim(), (chroma || '').trim())
+  MU_PENDING[name] = loadSprite(file.trim())
     .then(c => { game.assets[name] = new SpriteSheet(c, +rows, +cols, +frames,
                                                      +flip.trim()); })
     .catch(() => {});
@@ -24,13 +24,15 @@ function muFrameCount(game, name) {
   const def = game && game.lib && game.lib.Images && game.lib.Images[name];
   return def ? (+def.split(',')[3] || 1) : 1;
 }
-// Unkeyed bitmap → canvas (for blits that use their own key logic).
+// Unkeyed bitmap → canvas (for blits that use their own key logic). The
+// sprite PNGs have the colour key baked in as alpha, so the unkeyed originals
+// of the bitmaps read this way ship separately as assets/raw/<name>.png.
 const MU_RAW = {};
 function muRawImage(file) {
   if (MU_RAW[file]) return MU_RAW[file].canvas;
   MU_RAW[file] = { canvas: null };
   const img = new Image();
-  img.src = ASSETS + encodeURIComponent(file);
+  img.src = ASSETS + 'raw/' + encodeURIComponent(file.replace(/\.bmp$/i, '.png'));
   img.decode().then(() => {
     const c = document.createElement('canvas');
     c.width = img.naturalWidth; c.height = img.naturalHeight;

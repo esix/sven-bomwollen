@@ -687,11 +687,11 @@ function check(name, cond, info) {
 
   await run('percent', async () => {
     const r = await ev(async () => {
-      const res = await fetch(ASSETS + 'Ufo67%25.bmp');
+      const res = await fetch(ASSETS + 'Ufo67%25.png');
       const a = game.assets['UfoShadow'];
       return { ok: res.ok, sheet: !!a, w: a ? a.canvas.width : 0 };
     });
-    check('sprite file names with % load (Ufo67%.bmp, CMA-05)', r.ok && r.sheet && r.w > 0, r);
+    check('sprite file names with % load (Ufo67%.png, CMA-05)', r.ok && r.sheet && r.w > 0, r);
   });
 
 
